@@ -49,10 +49,3 @@ steps:
   inputs: 
     pathtoPublish: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
  
-- task: AzureWebApp@1
-  displayName: 'Deploy to App Service'
-  inputs:
-    azureSubscription: '$(serviceConnection)'
-    appName: '$(appServiceName)'
-    appType: 'webApp'
-    package: '$(System.ArtifactsDirectory)/$(Build.BuildId).zip'
