@@ -1,51 +1,42 @@
-trigger:
-- master
- 
-pool:
-  vmImage: 'windows-latest'
 
-# Set variables
+trigger:
+- none
+
 variables:
-  directory: react-azure-demo
-  stage: development
-  serviceConnection: REACT_AZURE_DEMO
-  appServiceName: reactazuredemo
- 
-steps:
-- task: NodeTool@0
-  inputs:
-    versionSpec: '10.x'
-  displayName: 'Install Node.js'
- 
-- script: 
-    npm install
-  displayName: 'npm install'
-  workingDirectory: $(directory)
- 
-- script: 
-    set "REACT_APP_STAGE=$(stage)" && npm run build
-  displayName: 'npm build'
-  workingDirectory: $(directory)
- 
-- task: CopyFiles@2
-  displayName: 'Copy files'
-  inputs:
-    sourceFolder: '$(directory)/build' 
-    Contents: '**/*'
-    TargetFolder: '$(Build.ArtifactStagingDirectory)'
-    cleanTargetFolder: true
- 
-- task: ArchiveFiles@2
-  displayName: 'Archive files'
-  inputs:
-    rootFolderOrFile: '$(Build.ArtifactStagingDirectory)'
-    includeRootFolder: false
-    archiveType: zip
-    archiveFile: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
-    replaceExistingArchive: true
- 
-- task: PublishBuildArtifacts@1
-  displayName: 'Publish Build Artifacts'
-  inputs: 
-    pathtoPublish: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
- 
+
+  # Azure Resource Manager connection created during pipeline creation
+  azureSubscription: ###
+
+  # Web app name
+  webAppNameStaging: 'rafeFrontendWebApp-staging'
+  webAppNameProduction: 'rafeFrontendWebApp-production'
+
+  # Environment name
+  environmentNameStaging: 'staging'
+  environmentNameProduction: 'production'
+
+  # Agent VM image name
+  vmImageName: 'ubuntu-latest'
+  System.Debug: true
+stages:
+- stage: Build
+  displayName: Build stage
+  pool:
+    vmImage: $(vmImageName)
+  jobs:  
+  - job: Build_Staging
+    displayName: Build Staging
+    steps:
+      - script: |
+         npm install react-scripts
+         npm run build
+      - task: CopyFiles@2
+        displayName: 'Copy Files to: $(Build.ArtifactStagingDirectory)'
+        inputs:
+          SourceFolder: '$(System.DefaultWorkingDirectory)/build'
+          TargetFolder: '$(Build.ArtifactStagingDirectory)'
+      - task: PublishPipelineArtifact@1
+        inputs:
+          targetPath: $(System.DefaultWorkingDirectory)/build
+          artifact: 'drop'
+          publishLocation: 'pipeline'
